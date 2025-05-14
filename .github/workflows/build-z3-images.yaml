@@ -10,11 +10,11 @@ on:
     branches:
       - dev
     paths:
-      - '.github/workflows/build-z3-images.yml'
+      - '.github/workflows/build-z3-images.yaml'
 
   pull_request:
     paths:
-      - '.github/workflows/build-z3-images.yml'
+      - '.github/workflows/build-z3-images.yaml'
 
 jobs:
   build:
