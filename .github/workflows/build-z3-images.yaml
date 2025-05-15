@@ -23,7 +23,7 @@ on:
       - '.github/workflows/build-z3-images.yaml'
 
 jobs:
-  build:
+  build-zaino:
     name: Build zaino Docker
     permissions:
       contents: 'read'
@@ -36,6 +36,24 @@ jobs:
       dockerfile_path: ./Dockerfile
       dockerfile_target: runtime
       image_name: zaino
+      no_cache: ${{ inputs.no_cache || false }}
+      rust_backtrace: full
+      rust_lib_backtrace: full
+      rust_log: info
+
+  build-zallet:
+    name: Build zallet Docker
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      packages: 'write'
+    uses: ./.github/workflows/sub-build-docker-image.yaml
+    with:
+      repository: gustavovalverde/wallet
+      ref: 'feat-add-docker'
+      dockerfile_path: ./docker/Dockerfile
+      dockerfile_target: runtime
+      image_name: zallet
       no_cache: ${{ inputs.no_cache || false }}
       rust_backtrace: full
       rust_lib_backtrace: full
