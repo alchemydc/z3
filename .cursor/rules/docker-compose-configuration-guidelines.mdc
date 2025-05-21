@@ -1,0 +1,48 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Docker Compose Configuration Guidelines
+
+This document outlines best practices for configuring multi-service applications using Docker Compose, drawing from the setup for Zebra, Zaino, and Zallet.
+
+**Key Files:**
+- Environment Variables: [`z3/.env`](mdc:zaino/z3/.env)
+- Docker Compose Configuration: [`z3/docker-compose.yml`](mdc:zaino/z3/docker-compose.yml)
+- Zebra Entrypoint Script: [`zebra/docker/entrypoint.sh`](mdc:zaino/zebra/docker/entrypoint.sh)
+- Zaino Entrypoint Script: [`zaino/docker/entrypoint.sh`](mdc:zaino/zaino/docker/entrypoint.sh)
+- Placeholder for Docker `configs`: [`z3/.cookie`](mdc:zaino/z3/.cookie) (example)
+
+**Core Principles:**
+
+1.  **Centralized Environment Variables (`.env`)**:
+    *   Store common and service-specific configurable parameters in a single `.env` file (e.g., [`z3/.env`](mdc:zaino/z3/.env)). This includes network settings, ports, log levels, and feature flags.
+    *   For shared resources like an RPC authentication cookie directory, define a single global variable in the `.env` file (e.g., `COOKIE_AUTH_FILE_DIR=/var/run/auth`). This directory should be an FHS-compliant path for transient runtime data.
+
+2.  **Respecting Application Entrypoints in `docker-compose.yml`**:
+    *   Each service in [`z3/docker-compose.yml`](mdc:zaino/z3/docker-compose.yml) should have its environment variables set according to what its entrypoint script (e.g., [`zebra/docker/entrypoint.sh`](mdc:zaino/zebra/docker/entrypoint.sh), [`zaino/docker/entrypoint.sh`](mdc:zaino/zaino/docker/entrypoint.sh)) expects.
+    *   If an entrypoint script requires a specific variable (e.g., `ZEBRA_COOKIE_DIR` for Zebra, `ZAINO_VALIDATOR_COOKIE_PATH` for Zaino), these should be set in the `environment` section of the service definition.
+    *   The values for these service-specific variables should be derived from the global variables in the `.env` file. For example:
+        *   Zebra's `ZEBRA_COOKIE_DIR` could be `${COOKIE_AUTH_FILE_DIR}`.
+        *   Zaino's `ZAINO_VALIDATOR_COOKIE_PATH` could be `${COOKIE_AUTH_FILE_DIR}/.cookie`.
+
+3.  **Using Docker `configs` for Shared Runtime Data**:
+    *   For runtime-generated files that need to be shared between services (like RPC cookie files), use Docker `configs`.
+    *   Define a top-level `configs:` block in [`z3/docker-compose.yml`](mdc:zaino/z3/docker-compose.yml), sourcing from a placeholder file on the host (e.g., `file: ./.cookie`).
+        ```yaml
+        configs:
+          cookie_auth_config: # Descriptive name for the shared config object
+            file: ./.cookie
+        ```
+    *   Mount this Docker `config` into each relevant service:
+        *   The service generating the file (e.g., Zebra) mounts the config to the full path where its entrypoint expects to write the file (e.g., `target: ${COOKIE_AUTH_FILE_DIR}/.cookie`).
+        *   The service consuming the file (e.g., Zaino) mounts the same config to the full path where its entrypoint expects to read the file (e.g., `target: ${COOKIE_AUTH_FILE_DIR}/.cookie`).
+    *   This ensures both services are looking at the same underlying data, managed by Docker. The initial placeholder file allows Docker Compose to create the config object.
+
+4.  **FHS-Compliant Paths**:
+    *   For transient runtime data generated within containers (like cookie files or PID files), prefer FHS-compliant directories such as `/var/run/<appname>/` or `/run/<appname>/`.
+
+5.  **Clear Naming Conventions**:
+    *   Use descriptive names for environment variables (e.g., `COOKIE_AUTH_FILE_DIR` instead of generic names).
+    *   Name Docker `config` objects clearly to reflect their purpose and shared nature (e.g., `cookie_auth_config`).

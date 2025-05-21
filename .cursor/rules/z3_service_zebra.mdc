@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Z3 Service: Zebra
+
+This rule describes the Zebra service configuration within the Z3 Docker stack.
+
+## Docker Configuration (`docker-compose.yml`):
+
+*   **Image:** `zfnd/zebra:latest` (or a specific version).
+*   **Container Name:** `z3_zebra`.
+*   **Environment Variables:**
+    *   `RUST_LOG`: Controls Zebra's logging level (e.g., `${ZEBRA_RUST_LOG:-info}`).
+    *   `NETWORK`: Specifies the Zcash network (e.g., `${NETWORK_NAME:-Testnet}`).
+    *   `ZEBRA_RPC_PORT`: Defines the RPC port Zebra listens on (e.g., `${ZEBRA_RPC_PORT:-18232}`).
+    *   `ENABLE_COOKIE_AUTH`: Toggles RPC cookie authentication (e.g., `${ENABLE_COOKIE_AUTH:-false}`).
+*   **Volumes:**
+    *   `zebra_data:/home/zebra/.cache/zebra`: Persists Zebra's blockchain data and state.
+    *   `./config/zebra.toml:/home/zebra/.config/zebrad.toml:ro`: Mounts the Zebra configuration file [z3/config/zebra.toml](mdc:zaino/z3/config/zebra.toml).
+*   **Ports:** Exposes Zebra's RPC port to the host (e.g., `"${ZEBRA_HOST_RPC_PORT:-18232}:${ZEBRA_RPC_PORT:-18232}"`).
+*   **Healthcheck:** Uses `zebrad getblockchaininfo` to verify service health.
+
+## Source and Build (if building locally):
+
+*   **Dockerfile:** [zebra/docker/Dockerfile](mdc:zaino/zebra/docker/Dockerfile)
+*   **Entrypoint Script:** [zebra/docker/entrypoint.sh](mdc:zaino/zebra/docker/entrypoint.sh)
+    *   This script handles initial setup, configuration generation from environment variables if `zebra.toml` is minimal or missing, and user privilege dropping using `gosu`.
+
+## Configuration File (`config/zebra.toml`):
+
+*   The primary configuration for Zebra. Settings here can be supplemented or overridden by environment variables defined in the `docker-compose.yml` and processed by the `entrypoint.sh`.
+*   Key settings often include network parameters, RPC listener details, and state cache directory (though the latter is usually managed by the volume mount).
+
+## Role in Z3 Stack:
+
+Zebra is the Zcash consensus node. It connects to the Zcash P2P network, downloads and validates the blockchain, and provides an RPC interface for other services (like Zaino and Zallet) to query blockchain data and submit transactions.
