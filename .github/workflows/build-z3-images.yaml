@@ -1,0 +1,60 @@
+name: Build Z3 images
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: "Disable Docker cache for this build"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - dev
+    paths:
+      - '.github/workflows/build-z3-images.yaml'
+
+  pull_request:
+    paths:
+      - '.github/workflows/build-z3-images.yaml'
+
+jobs:
+  build-zaino:
+    name: Build zaino Docker
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      packages: 'write'
+    uses: ./.github/workflows/sub-build-docker-image.yaml
+    with:
+      repository: gustavovalverde/zaino
+      ref: 'imp-dockerfile'
+      dockerfile_path: ./docker/Dockerfile
+      dockerfile_target: runtime
+      image_name: zaino
+      no_cache: ${{ inputs.no_cache || false }}
+      rust_backtrace: full
+      rust_lib_backtrace: full
+      rust_log: info
+
+  build-zallet:
+    name: Build zallet Docker
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      packages: 'write'
+    uses: ./.github/workflows/sub-build-docker-image.yaml
+    with:
+      repository: gustavovalverde/wallet
+      ref: 'feat-add-docker'
+      dockerfile_path: ./docker/Dockerfile
+      dockerfile_target: runtime
+      image_name: zallet
+      no_cache: ${{ inputs.no_cache || false }}
+      rust_backtrace: full
+      rust_lib_backtrace: full
+      rust_log: info

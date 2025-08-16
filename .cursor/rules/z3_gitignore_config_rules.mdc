@@ -1,0 +1,50 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# .gitignore Rules for the z3/config/ Directory
+
+The `[z3/.gitignore](mdc:z3/z3/.gitignore)` file contains specific rules to manage the contents of the `z3/config/` directory and its subdirectories (like `z3/config/tls/`). The goal is to generally ignore user-generated configuration files or sensitive data placed here, while ensuring that the directory structure itself (including empty directories needed for Docker mounts or `configs`) can be version-controlled using `.gitkeep` files.
+
+## Key Patterns in `z3/.gitignore` for `config/`:
+
+1.  **General Ignore for `config/` Contents:**
+    ```gitignore
+    config/**
+    ```
+    This rule ignores all files and subdirectories recursively within `z3/config/`.
+
+2.  **Un-ignoring the `tls` Subdirectory (to look inside):**
+    ```gitignore
+    !config/tls/
+    ```
+    This allows Git to consider rules pertaining to the contents of `z3/config/tls/`.
+
+3.  **Ignoring Contents of `tls` (before specific un-ignores):**
+    ```gitignore
+    config/tls/*
+    ```
+    After un-ignoring the `tls` directory itself, this rule ensures its contents are ignored by default, allowing for specific un-ignores next.
+
+4.  **Un-ignoring `.gitkeep` in `config/tls/`:**
+    ```gitignore
+    !config/tls/.gitkeep
+    ```
+    This explicitly prevents `[z3/config/tls/.gitkeep](mdc:z3/z3/config/tls/.gitkeep)` from being ignored, allowing the `z3/config/tls/` directory to be tracked even if empty.
+
+5.  **Un-ignoring `.gitkeep` in `config/`:**
+    ```gitignore
+    !config/.gitkeep
+    ```
+    This explicitly prevents `[z3/config/.gitkeep](mdc:z3/z3/config/.gitkeep)` from being ignored, allowing the `z3/config/` directory to be tracked even if empty.
+
+**Summary of Behavior:**
+
+*   All files and folders within `z3/config/` are ignored by default.
+*   The `z3/config/tls/` directory is specifically managed to allow its `.gitkeep` file to be tracked.
+*   The `z3/config/` directory itself has its `.gitkeep` file tracked.
+*   Any other files (e.g., `config/my_secret.txt`, `config/tls/extra_cert.pem`) will be ignored by Git and should not be committed unless a specific negation rule (`!config/...`) is added for them.
+*   Note: The `[z3/config/zallet_identity.txt](mdc:z3/z3/config/zallet_identity.txt)` file, while crucial, is covered by `config/**` and will be ignored. It is user-generated and should not be committed to the repository.
+
+These rules ensure that the necessary directory structure for configurations (especially for Docker `configs` which might require specific source paths) can be maintained in the Git repository without tracking actual sensitive configuration files or runtime data within them.

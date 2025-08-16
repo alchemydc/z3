@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Z3 Service Security and Networking Configuration Guide
+
+This document outlines the security policies and networking configurations for the Z3 services (Zebra, Zaino, Zallet) as implemented in the `z3/docker-compose.yml` and related entrypoint scripts.
+
+## Core Security Policies:
+
+1.  **Zebra <-> Zaino (Validator Connection):**
+    *   Zaino connects to Zebra's RPC. If Zebra's address (`ZAINO_VALIDATOR_LISTEN_ADDRESS`) is not a loopback address from Zaino's perspective (e.g., using the service name `zebra:${ZEBRA_RPC_PORT}`), Zaino's internal policy mandates that cookie authentication must be used.
+    *   To comply:
+        *   The `ENABLE_COOKIE_AUTH` environment variable (in `[.env](mdc:zaino/zaino/zaino/z3/.env)`) must be set to `true`.
+        *   Zebra (`[entrypoint.sh](mdc:zaino/zaino/zaino/z3/entrypoint.sh)`) must be configured to enable cookie authentication and generate a `.cookie` file.
+        *   Zaino (`[entrypoint.sh](mdc:zaino/zaino/zaino/zaino/docker/entrypoint.sh)`) must be configured to use cookie authentication and read the shared cookie file.
+        *   A shared cookie mechanism is used:
+            *   A host file `./.cookie` is defined as a Docker `config` named `cookie_auth_config`.
+            *   This config is mounted into both `zebra` and `zaino` containers at `${COOKIE_AUTH_FILE_DIR}/.cookie`. The `COOKIE_AUTH_FILE_DIR` variable (defined in `[.env](mdc:zaino/zaino/zaino/z3/.env)`) should specify an FHS-compliant path (e.g., `/var/run/auth`).
+            *   **Note on Writability**: If Zebra generates the cookie, it needs to write to this file. Docker `configs` are typically read-only. The user must ensure this setup allows Zebra to manage the cookie file when `ENABLE_COOKIE_AUTH=true`.
+    *   **Authentication:**
+        *   **Cookie-based (Primary method if `ENABLE_COOKIE_AUTH=true` in `[.env](mdc:zaino/z3/.env)`):**
+            *   If `ZAINO_VALIDATOR_COOKIE_AUTH_ENABLE` is `true` (derived from `${ENABLE_COOKIE_AUTH}`), Zaino reads Zebra's RPC cookie from the path specified by `ZAINO_VALIDATOR_COOKIE_PATH` (e.g., `${COOKIE_AUTH_FILE_DIR}/.cookie`).
+            *   Zaino expects this file to contain the cookie string, typically in the format `__cookie__:<base64_encoded_random_string>`.
+            *   Zaino then uses this cookie to authenticate to Zebra by sending an HTTP `Authorization` header with the value `Basic __cookie__:<base64_encoded_random_string>`. The `__cookie__:` part acts as the username, and the rest as the password in Basic Authentication terms.
+            *   This mechanism relies on Zebra generating the cookie file and Zaino having read access to it via a shared Docker `config` mount.
+        *   **User/Password-based (Basic Auth):** If `ZAINO_VALIDATOR_COOKIE_AUTH_ENABLE` is `false`, Zaino can use HTTP Basic Authentication with `ZAINO_VALIDATOR_USER` and `ZAINO_VALIDATOR_PASSWORD` (if these are provided).
+        *   **No Authentication:** If cookie auth is disabled and user/pass are empty, Zaino attempts to connect without authentication, relying on Zebra to permit such connections.
+
+2.  **Zaino's gRPC Server (Zaino <-> Zallet Connection):**
+    *   Zaino's gRPC server listens on `ZAINO_GRPC_LISTEN_ADDRESS`. If this address is `0.0.0.0` (or any non-loopback/non-private IP from Zaino's perspective), Zaino's internal policy requires its gRPC service to use TLS.
+    *   To comply:
+        *   The `ZAINO_GRPC_TLS_ENABLE` environment variable (in `[.env](mdc:zaino/zaino/zaino/z3/.env)`) must be set to `true`.
+        *   TLS certificate and key must be provided to Zaino. These are supplied as Docker `configs` (e.g., `zaino_tls_cert` and `zaino_tls_key`), sourced from host files (e.g., `./config/tls/zaino.crt` and `./config/tls/zaino.key`).
+        *   The Docker configs are mounted into Zaino at FHS-compliant paths defined by environment variables in `[.env](mdc:zaino/zaino/zaino/z3/.env)` (e.g., `ZAINO_TLS_CERT_CONTAINER_PATH=/var/run/zaino/tls/zaino.crt`, `ZAINO_TLS_KEY_CONTAINER_PATH=/var/run/zaino/tls/zaino.key`).
+        *   Zaino's internal configuration then uses these paths, set via `ZAINO_GRPC_TLS_CERT_PATH=${ZAINO_TLS_CERT_CONTAINER_PATH}` and `ZAINO_GRPC_TLS_KEY_PATH=${ZAINO_TLS_KEY_CONTAINER_PATH}` in `docker-compose.yml`.
+        *   The user is responsible for generating these TLS certificate files on the host.
+
+3.  **Zallet's Connection to Zaino's gRPC Server:**
+    *   Since Zaino's gRPC service will be TLS-enabled, Zallet must connect to it using TLS and must trust Zaino's server certificate.
+    *   **Challenge**: Standard Zallet configuration (`[entrypoint.sh](mdc:zaino/zaino/zaino/zaino/zaino/zaino/wallet/docker/entrypoint.sh)`) does not have explicit, documented options for configuring TLS trust (e.g., specifying a CA certificate or trusting a self-signed server certificate) for its indexer connection.
+    *   The user needs to investigate and implement how Zallet will trust Zaino's TLS certificate. This might involve custom modifications to Zallet's container or finding undocumented configuration methods.
+
+## Docker Compose Configuration (`[docker-compose.yml](mdc:zaino/zaino/zaino/zaino/zaino/zaino/z3/docker-compose.yml)`):
+
+*   Environment variables from `[.env](mdc:zaino/zaino/zaino/zaino/zaino/zaino/z3/.env)` are used extensively to control these security features and other service parameters.
+*   Zaino's healthcheck uses `curl` and requires additional environment variables (`ZAINO_GRPC_TLS_ENABLE_SCHEME_SUFFIX`, `ZAINO_GRPC_TLS_ENABLE_CURL_OPT`) to adapt to TLS settings. These should be defined in `[.env](mdc:zaino/zaino/zaino/zaino/zaino/zaino/z3/.env)`.
+
+## Entrypoint Scripts:
+
+*   The entrypoint scripts for `zebra` (`[entrypoint.sh](mdc:zaino/zaino/zaino/zaino/zaino/zaino/z3/entrypoint.sh)`), `zaino` (`[entrypoint.sh](mdc:zaino/zaino/zaino/zaino/zaino/zaino/zaino/docker/entrypoint.sh)`), and `zallet` (`[entrypoint.sh](mdc:zaino/zaino/zaino/zaino/zaino/zaino/wallet/docker/entrypoint.sh)`) have been modified to handle directory ownership (`chown`) failures more gracefully by warning instead of exiting, particularly for directories that might contain read-only mounted files (like configs). However, `mkdir -p` failures will still cause an exit.
