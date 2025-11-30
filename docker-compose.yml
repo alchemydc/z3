@@ -136,7 +136,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
+      - ${Z3_PROMETHEUS_DATA_PATH}:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -154,7 +154,7 @@ services:
     container_name: z3_grafana
     restart: unless-stopped
     volumes:
-      - grafana_data:/var/lib/grafana
+      - ${Z3_GRAFANA_DATA_PATH}:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning
       - ./config/grafana/dashboards:/etc/grafana/dashboards
     environment:

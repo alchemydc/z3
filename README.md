@@ -16,6 +16,7 @@ A modern, modular Zcash software stack combining Zebra, Zaino, and Zallet to rep
 - [Interacting with Services](#interacting-with-services)
 - [Configuration Guide](#configuration-guide)
 - [Health and Readiness Checks](#health-and-readiness-checks)
+- [Monitoring](#monitoring)
 
 ---
 
@@ -118,6 +119,8 @@ docker compose ps
 | **Zebra** | `zfnd/zebra:3.1.0` | Pre-built from [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
 | **Zaino** | `z3-zaino:local` | Must build locally from submodule |
 | **Zallet** | `z3-zallet:local` | Must build locally from submodule |
+| **Prometheus** | `prom/prometheus:latest` | Official Prometheus image |
+| **Grafana** | `grafana/grafana:latest` | Official Grafana image |
 
 ### Building Local Images
 
@@ -348,6 +351,8 @@ By default, the stack uses Docker named volumes which are managed by Docker:
 - `zebra_data`: Zebra blockchain state (~300GB+ for mainnet, ~30GB for testnet)
 - `zaino_data`: Zaino indexer database
 - `zallet_data`: Zallet wallet data
+- `prometheus_data`: Prometheus metrics storage
+- `grafana_data`: Grafana dashboard data and settings
 - `shared_cookie_volume`: RPC authentication cookies
 
 **Advantages:**
@@ -403,11 +408,41 @@ Each service runs as a specific non-root user with distinct UIDs/GIDs:
 - **Zebra**: UID=10001, GID=10001, permissions 700
 - **Zaino**: UID=1000, GID=1000, permissions 700
 - **Zallet**: UID=65532, GID=65532, permissions 700
+- **Prometheus**: UID=65534, GID=65534, permissions 700
+- **Grafana**: UID=472, GID=0, permissions 700
 
 **Critical:** Local directories must have correct ownership and secure permissions:
 - Use `fix-permissions.sh` to set ownership automatically
 - Permissions must be 700 (owner only) or 750 (owner + group read)
 - **Never use 755 or 777** - these expose your blockchain data and wallet to other users
+
+#### Monitoring Data (Optional)
+
+If you choose to use local directories for Prometheus and Grafana data:
+
+1. **Create directories:**
+   ```bash
+   mkdir -p /your/chosen/path/prometheus-data
+   mkdir -p /your/chosen/path/grafana-data
+   ```
+
+2. **Fix permissions:**
+   - **Prometheus** runs as `nobody` (UID 65534):
+     ```bash
+     sudo chown -R 65534:65534 /your/chosen/path/prometheus-data
+     chmod 700 /your/chosen/path/prometheus-data
+     ```
+   - **Grafana** runs as UID 472:
+     ```bash
+     sudo chown -R 472:0 /your/chosen/path/grafana-data
+     chmod 700 /your/chosen/path/grafana-data
+     ```
+
+3. **Update `.env`:**
+   ```bash
+   Z3_PROMETHEUS_DATA_PATH=/your/chosen/path/prometheus-data
+   Z3_GRAFANA_DATA_PATH=/your/chosen/path/grafana-data
+   ```
 
 ## Configuration Guide
 
@@ -626,3 +661,44 @@ Once the stack is running, services can be accessed via their exposed ports:
 * **Zallet RPC:** `http://localhost:${ZALLET_HOST_RPC_PORT:-28232}` (default: `http://localhost:28232`)
 
 Refer to the individual component documentation for RPC API details.
+
+## Monitoring
+
+The Z3 stack includes a pre-configured Grafana dashboard for monitoring the Zebra node.
+
+### Accessing the Dashboard
+
+- **URL:** [http://localhost:3000](http://localhost:3000)
+- **Default Credentials:**
+  - **User:** `admin`
+  - **Password:** `admin` (you will be prompted to change this on first login)
+
+### Dashboard Features
+
+The **Zebra Status** dashboard provides real-time visibility into:
+
+- **Node Status:** Current version, block height, and peer connection health.
+- **Network Health:** Inbound/Outbound traffic rates and P2P message volume.
+- **Consensus & Mempool:** Mempool transaction count/size and proof verification rates.
+- **Peer Analytics:** Distribution of connected peer user agents.
+
+> [!NOTE]
+> Currently, the dashboard only visualizes metrics from the **Zebra** node. Support for **Zaino** (indexer) and **Zallet** (wallet) metrics is planned for future updates.
+
+### Configuration
+
+Monitoring is enabled by default via the `prometheus` and `grafana` services in `docker-compose.yml`. Prometheus scrapes metrics from Zebra's metrics endpoint (port 9999), and Grafana visualizes this data.
+
+**To disable monitoring:**
+
+Edit your `.env` file and comment out or clear the `COMPOSE_PROFILES` variable:
+
+```bash
+# In .env:
+# COMPOSE_PROFILES=monitoring  <-- Comment out to disable
+```
+
+Then restart the stack:
+```bash
+docker compose up -d --remove-orphans
+```
