@@ -1,4 +1,41 @@
 services:
+  traefik:
+    image: traefik:latest
+    container_name: z3_traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8090:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - z3_net
+
+  rpc-router:
+    build:
+      context: ./rpc-router
+      dockerfile: Dockerfile
+    container_name: z3_rpc_router
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.z3.rule=Host(`z3.localhost`)"
+      - "traefik.http.routers.z3.entrypoints=web"
+      - "traefik.http.services.z3.loadbalancer.server.port=8080"
+    environment:
+      - ZEBRA_URL=http://z3_zebra:${Z3_ZEBRA_RPC_PORT}
+      - ZALLET_URL=http://z3_zallet:${ZALLET_RPC_PORT}
+      - ZAINO_URL=http://z3_zaino:${ZAINO_JSON_RPC_PORT}
+    networks:
+      - z3_net
+    depends_on:
+      - zebra
+      - zaino
+      - zallet
+
   zebra:
     # Run 'docker compose build' to build locally from ./zebra submodule instead
     image: zfnd/zebra:3.1.0
