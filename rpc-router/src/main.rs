@@ -1,3 +1,8 @@
+//! RPC Router for Zebra, Zallet and Zaino.
+//!
+//! This service listens for JSON-RPC requests and routes them to the appropriate backend
+//! based on the method being called. It merges the OpenRPC schemas from Zebra and Zallet
+//! to determine which methods belong to which service.
 use std::{env, net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
@@ -20,11 +25,13 @@ use serde_json::{json, Value};
 use tokio::net::TcpListener;
 use tracing::{error, info, warn};
 
+/// Structure to parse incoming JSON-RPC requests.
 #[derive(Deserialize, Debug)]
 struct RpcRequest {
     method: String,
 }
 
+/// Configuration for the RPC router.
 #[derive(Clone)]
 struct Config {
     zebra_url: String,
@@ -44,6 +51,7 @@ impl Config {
     }
 }
 
+/// Merged schema and method lists for routing.
 #[derive(Clone)]
 struct Z3Schema {
     zebra_methods: Vec<Value>,
@@ -51,6 +59,7 @@ struct Z3Schema {
     merged: Value,
 }
 
+/// Forwards the incoming request to the specified target URL with basic auth.
 async fn forward_request(
     req: Request<Full<Bytes>>,
     target_url: &str,
@@ -96,6 +105,8 @@ async fn forward_request(
 
     Ok(new_res)
 }
+
+/// Adds CORS headers to the response.
 fn add_cors_headers(mut resp: Response<Full<Bytes>>) -> Response<Full<Bytes>> {
     let headers = resp.headers_mut();
     for &(name, value) in &[
@@ -116,6 +127,7 @@ fn add_cors_headers(mut resp: Response<Full<Bytes>>) -> Response<Full<Bytes>> {
     resp
 }
 
+/// Main request handler.
 async fn handler(
     req: Request<hyper::body::Incoming>,
     config: Arc<Config>,
@@ -202,6 +214,7 @@ async fn handler(
     }
 }
 
+/// Calls rpc.discover on the given URL and returns the parsed JSON response.
 async fn call_rpc_discover(url: &str) -> Result<serde_json::Value> {
     let client = ReqwestClient::new();
 
@@ -228,10 +241,12 @@ async fn call_rpc_discover(url: &str) -> Result<serde_json::Value> {
     Ok(resp)
 }
 
+/// Extracts the methods array from the OpenRPC schema.
 fn extract_methods_array(schema: &Value) -> Vec<Value> {
     schema["methods"].as_array().cloned().unwrap_or_default()
 }
 
+/// Annotates each method with its origin server.
 fn annotate_methods_with_server(methods: &mut Vec<Value>, server_name: &str) {
     for m in methods {
         m.as_object_mut()
@@ -240,6 +255,7 @@ fn annotate_methods_with_server(methods: &mut Vec<Value>, server_name: &str) {
     }
 }
 
+/// Merges the components.schemas from the given schema into the combined map.
 fn merge_components_schemas(schema: &Value, combined: &mut serde_json::Map<String, Value>) {
     if let Some(obj) = schema["components"]["schemas"].as_object() {
         for (k, v) in obj {
@@ -248,6 +264,7 @@ fn merge_components_schemas(schema: &Value, combined: &mut serde_json::Map<Strin
     }
 }
 
+/// Merges the OpenRPC schemas from Zebra and Zallet.
 fn merge_openrpc_schemas(zebra: Value, zallet: Value) -> Result<Z3Schema> {
     // Extract method arrays
     let mut zebra_methods = extract_methods_array(&zebra);
