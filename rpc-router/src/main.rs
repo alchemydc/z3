@@ -43,9 +43,9 @@ impl Config {
     fn from_env() -> Self {
         Self {
             zebra_url: env::var("ZEBRA_URL")
-                .unwrap_or_else(|_| "http://127.0.0.1:20617".to_string()),
+                .unwrap_or_else(|_| "http://127.0.0.1:20251".to_string()),
             zallet_url: env::var("ZALLET_URL")
-                .unwrap_or_else(|_| "http://127.0.0.1:25617".to_string()),
+                .unwrap_or_else(|_| "http://127.0.0.1:25251".to_string()),
             zaino_url: env::var("ZAINO_URL").unwrap_or_else(|_| "http://zaino:8237".to_string()),
         }
     }
@@ -326,7 +326,9 @@ async fn main() -> Result<()> {
 
     let z3 = merge_openrpc_schemas(zebra_schema, zallet_schema)?;
 
-    println!("{}", serde_json::to_string_pretty(&z3.merged)?);
+    let file_path = "z3_merged.json";
+    tokio::fs::write(file_path, serde_json::to_string_pretty(&z3.merged)?).await?;
+    info!("Saved merged schema to {}", file_path);
 
     let listener = TcpListener::bind(addr).await?;
     info!("RPC Router listening on {}", addr);
