@@ -333,6 +333,9 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(addr).await?;
     info!("RPC Router listening on {}", addr);
 
+    info!("You can use the following playground URL:");
+    info!("https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=https://raw.githubusercontent.com/oxarbitrage/z3/refs/heads/openrpc-router/rpc-router/z3_merged.json&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false&uiSchema[appBar]");
+
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
