@@ -1,7 +1,7 @@
 services:
   zebra:
     # Run 'docker compose build' to build locally from ./zebra submodule instead
-    image: zfnd/zebra:3.1.0
+    image: zfnd/zebra:4.0.0
     build:
       context: ./zebra
       dockerfile: docker/Dockerfile
@@ -115,11 +115,124 @@ services:
       - z3_net
     # No healthcheck: distroless image has no shell/curl
 
+  # =============================================================================
+  # Monitoring Stack (enabled with --profile monitoring)
+  # =============================================================================
+  # Usage: docker compose --profile monitoring up -d
+  # Access:
+  #   - Grafana:      http://localhost:3000 (admin/admin)
+  #   - Prometheus:   http://localhost:9094
+  #   - Jaeger:       http://localhost:16686
+  #   - AlertManager: http://localhost:9093
+
+  jaeger:
+    image: jaegertracing/jaeger:2.1.0
+    container_name: z3_jaeger
+    profiles: [monitoring]
+    restart: unless-stopped
+    volumes:
+      - ./observability/jaeger/config.yaml:/etc/jaeger/config.yaml:ro
+    command:
+      - --config=/etc/jaeger/config.yaml
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      - "${JAEGER_OTLP_GRPC_PORT:-4317}:4317"
+      - "${JAEGER_OTLP_HTTP_PORT:-4318}:4318"
+      - "${JAEGER_SPANMETRICS_PORT:-8889}:8889"
+    networks:
+      - z3_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:16686/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:v3.2.0
+    container_name: z3_prometheus
+    profiles: [monitoring]
+    restart: unless-stopped
+    volumes:
+      - prometheus_data:/prometheus
+      - ./observability/prometheus/rules:/etc/prometheus/rules:ro
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    ports:
+      - "${PROMETHEUS_PORT:-9094}:9090"
+    networks:
+      - z3_net
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: z3_grafana
+    profiles: [monitoring]
+    restart: unless-stopped
+    volumes:
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/zebra_overview.json
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - z3_net
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: z3_alertmanager
+    profiles: [monitoring]
+    restart: unless-stopped
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    networks:
+      - z3_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9093/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
 volumes:
   zebra_data:
   zaino_data:
   zallet_data:
   shared_cookie_volume:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
 
 networks:
   z3_net:
@@ -130,3 +243,5 @@ configs:
     file: ./config/tls/zaino.crt
   zaino_tls_key:
     file: ./config/tls/zaino.key
+  prometheus_config:
+    file: ./observability/prometheus/prometheus.yaml
