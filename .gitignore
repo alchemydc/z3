@@ -29,5 +29,9 @@ config/tls/*
 # Then un-ignore the .gitkeep file within 'tls'
 !config/tls/.gitkeep
 
+# Zaino config (required by config-rs)
+!config/zaino/
+!config/zaino/zindexer.toml
+
 # Un-ignore .gitkeep directly under config
 !config/.gitkeep
