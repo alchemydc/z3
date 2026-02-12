@@ -108,37 +108,28 @@ docker compose ps
 
 ## Docker Images
 
-> [!IMPORTANT]
-> **Current Status:** Zaino and Zallet require local builds. Pre-built images are available for Zebra only.
-
 ### Image Sources
 
 | Service | Image | Source |
 |---------|-------|--------|
-| **Zebra** | `zfnd/zebra:3.1.0` | Pre-built from [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
-| **Zaino** | `z3-zaino:local` | Must build locally from submodule |
-| **Zallet** | `z3-zallet:local` | Must build locally from submodule |
+| **Zebra** | `zfnd/zebra:4.1.0` | [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
+| **Zaino** | `ghcr.io/zcashfoundation/zaino:sha-1871eba` | [zingolabs/zaino](https://github.com/zingolabs/zaino) |
+| **Zallet** | `electriccoinco/zallet:v0.1.0-alpha.3` | [zcash/wallet](https://github.com/zcash/wallet) |
 
-### Building Local Images
+### Building Local Images (Optional)
+
+To build from local submodules instead of using pre-built images:
 
 ```bash
 # Initialize submodules
 git submodule update --init --recursive
 
-# Build zaino and zallet
-docker compose build zaino zallet
+# Build all services locally
+docker compose build
 ```
 
 > [!NOTE]
-> Local builds are required because Zaino and Zallet are under active development and require specific version pinning for compatibility.
-
-### Why Local Builds?
-
-Zallet embeds Zaino libraries internally. Both must use compatible versions of the Zaino codebase. The submodules in this repository are pinned to tested, compatible commits.
-
-**For production deployments**, use official release images when available:
-- Zebra: [zfnd/zebra](https://hub.docker.com/r/zfnd/zebra) (stable releases)
-- Zaino/Zallet: Official releases when published
+> The submodules in this repository are pinned to tested, compatible commits if you prefer to build locally.
 
 ## Prerequisites
 
