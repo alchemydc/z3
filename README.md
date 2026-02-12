@@ -112,7 +112,7 @@ docker compose ps
 
 | Service | Image | Source |
 |---------|-------|--------|
-| **Zebra** | `zfnd/zebra:4.0.0` | [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
+| **Zebra** | `zfnd/zebra:4.1.0` | [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
 | **Zaino** | `ghcr.io/zcashfoundation/zaino:sha-1871eba` | [ZcashFoundation/zaino](https://github.com/ZcashFoundation/zaino) |
 | **Zallet** | `electriccoinco/zallet:v0.1.0-alpha.3` | [Electric Coin Co](https://github.com/Electric-Coin-Company/zallet) |
 

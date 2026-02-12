@@ -1,7 +1,7 @@
 services:
   zebra:
     # Run 'docker compose build' to build locally from ./zebra submodule instead
-    image: zfnd/zebra:4.0.0
+    image: zfnd/zebra:4.1.0
     build:
       context: ./zebra
       dockerfile: docker/Dockerfile
