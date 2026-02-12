@@ -320,9 +320,10 @@ These power the Monitor tab and can be scraped by Prometheus for Grafana dashboa
 
 ### No traces appearing
 
-1. Check OTLP endpoint: `OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318`
-2. Verify Jaeger health: http://localhost:16686
-3. Check Jaeger logs: `docker compose logs jaeger`
+1. Ensure Zebra was built with OTel support: `docker compose build --build-arg FEATURES="default-release-binaries opentelemetry" zebra`
+2. Check tracing env vars are set: `ZEBRA_TRACING__OPENTELEMETRY_ENDPOINT=http://jaeger:4318`
+3. Verify Jaeger health: http://localhost:16686
+4. Check Jaeger logs: `docker compose logs jaeger`
 
 ### Monitor tab shows "No Data"
 

@@ -1,11 +1,14 @@
 services:
   zebra:
     # Run 'docker compose build' to build locally from ./zebra submodule instead
+    # For OpenTelemetry tracing: docker compose build --build-arg FEATURES="default-release-binaries opentelemetry" zebra
     image: zfnd/zebra:4.1.0
     build:
       context: ./zebra
       dockerfile: docker/Dockerfile
       target: runtime
+      args:
+        FEATURES: ${ZEBRA_BUILD_FEATURES:-default-release-binaries}
     container_name: z3_zebra
     restart: unless-stopped
     env_file:

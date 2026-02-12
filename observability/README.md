@@ -15,8 +15,8 @@ docker compose --profile monitoring up -d
 docker compose logs -f zebra
 ```
 
-> **Note**: OpenTelemetry tracing (Jaeger) is not yet available in Zebra 4.0.0.
-> Jaeger is included for use with future Zebra releases that support tracing.
+> **Note**: OpenTelemetry tracing requires building Zebra with the `opentelemetry` feature.
+> The pre-built Docker image does not include it. See the [Tracing section](#tracing-jaeger) for build instructions.
 
 ## Components
 
@@ -82,10 +82,22 @@ See [grafana/README.md](grafana/README.md) for dashboard details.
 
 ### Tracing (Jaeger)
 
-> **Note**: OpenTelemetry tracing is not yet available in Zebra 4.0.0.
-> This feature will be supported in a future Zebra release.
+Distributed tracing via OpenTelemetry. Requires building Zebra with the `opentelemetry` feature (not included in the pre-built image):
 
-Once available, Jaeger will provide:
+```bash
+# Build Zebra with OpenTelemetry support
+docker compose build --build-arg FEATURES="default-release-binaries opentelemetry" zebra
+```
+
+Then enable tracing in `.env`:
+
+```bash
+ZEBRA_TRACING__OPENTELEMETRY_ENDPOINT=http://jaeger:4318
+ZEBRA_TRACING__OPENTELEMETRY_SERVICE_NAME=zebra
+ZEBRA_TRACING__OPENTELEMETRY_SAMPLE_PERCENT=100
+```
+
+Jaeger provides:
 
 - **Distributed traces**: Follow a request through all components
 - **Latency breakdown**: See where time is spent in each operation
