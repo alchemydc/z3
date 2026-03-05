@@ -345,10 +345,14 @@ async fn main() -> Result<()> {
 
     let listener = TcpListener::bind(addr).await?;
     info!("RPC Router listening on {}", addr);
-
     info!("You can use the following playground URL:");
     info!("{}", PLAYGROUND_URL);
 
+    run(config, listener, z3).await
+}
+
+/// Accepts connections and dispatches requests. Extracted for testability.
+async fn run(config: Arc<Config>, listener: TcpListener, z3: Z3Schema) -> Result<()> {
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
@@ -371,3 +375,6 @@ async fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod integration_tests;
