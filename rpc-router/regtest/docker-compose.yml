@@ -44,7 +44,6 @@ services:
     image: z3-zallet:local
     container_name: z3_regtest_zallet
     restart: unless-stopped
-    user: "65532:65532"
     command: ["--datadir", "/var/lib/zallet", "start"]
     depends_on:
       zebra:
