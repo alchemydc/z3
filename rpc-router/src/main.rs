@@ -201,7 +201,10 @@ async fn handler(
             info!("Routing {} to Zallet", rpc_req.method);
             &config.zallet_url
         } else {
-            info!("Routing {} to Zaino", rpc_req.method);
+            warn!(
+                "Method '{}' not found in Zebra or Zallet schema, falling back to Zaino",
+                rpc_req.method
+            );
             &config.zaino_url
         }
     } else {
