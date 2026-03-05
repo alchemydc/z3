@@ -26,30 +26,22 @@ The router accepts this configuration via environment variables, or alternativel
 
 ### Running Zebra and Zallet for Development
 
-For development and testing purposes, a helper utility was added to Zebra as part of the QA testing framework. This utility spawns both Zebra and Zallet in regtest mode.
-
-You can start both servers by running:
+The easiest way to get Zebra and Zallet running locally is via the Docker Compose stack at the root of this repository:
 
 ```bash
-python3 qa/rpc-tests/openrpc.py
+docker compose up -d zebra zallet
 ```
 
-Example output:
+Wait until both services are healthy, then note the RPC ports from your `.env` file (or the defaults in `docker-compose.yml`) and pass them to the router.
 
-```bash
-Keeping the test alive for 7200 seconds...
-Zebra running at http://localhost:18666/
-Zallet running at http://localhost:23666/
-```
-
-These two endpoints are then used by the RPC router.
+> **Note:** A `openrpc.py` QA helper that spawned Zebra and Zallet in regtest mode previously existed in the Zebra repository but was removed. It has not been ported to the [zcash/integration-tests](https://github.com/zcash/integration-tests) repository.
 
 ### Running the RPC Router
 
 ```bash
 RUST_LOG=info \
-ZEBRA_URL=http://localhost:18666/ \
-ZALLET_URL=http://localhost:23666/ \
+ZEBRA_URL=http://localhost:<zebra-rpc-port>/ \
+ZALLET_URL=http://localhost:<zallet-rpc-port>/ \
 cargo run
 ```
 
