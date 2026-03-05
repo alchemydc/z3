@@ -9,7 +9,7 @@ Self-contained Docker Compose setup for local end-to-end testing of the rpc-rout
 - Docker with the `z3-zallet:local` image built:
   ```bash
   cd ../../   # repo root
-  sudo docker compose build zallet
+  docker compose build zallet
   ```
 
 ## First-time setup
@@ -50,6 +50,14 @@ curl -s -X POST -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"rpc.discover","params":[],"id":3}' \
   http://127.0.0.1:8181 | grep -o '"title":"[^"]*"'
 ```
+
+## OpenRPC Playground
+
+Open the playground pointed at your locally running router:
+
+https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=http://127.0.0.1:8181&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false
+
+The playground will call `rpc.discover` on `http://127.0.0.1:8181` to load the live merged schema.
 
 ## Stop and clean up
 

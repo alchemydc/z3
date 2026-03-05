@@ -43,10 +43,20 @@ $DOCKER compose exec zebra curl -s -u zebra:zebra \
 echo "   Block mined."
 
 echo "==> Running init-wallet-encryption..."
-$DOCKER compose run --rm zallet --datadir /var/lib/zallet init-wallet-encryption
+# Remove stale lock file if present (left by a previous interrupted run)
+$DOCKER run --rm -v regtest_zallet_regtest_data:/data busybox \
+    sh -c 'rm -f /data/.lock'
+# Check if wallet already initialized by looking for the wallet database
+ALREADY_INIT=$($DOCKER run --rm -v regtest_zallet_regtest_data:/data busybox \
+    sh -c 'ls /data/*.sqlite /data/*.age 2>/dev/null | wc -l')
+if [ "${ALREADY_INIT:-0}" -gt 0 ]; then
+    echo "   Wallet already initialized, skipping."
+else
+    $DOCKER compose run --rm zallet --datadir /var/lib/zallet init-wallet-encryption
 
-echo "==> Running generate-mnemonic..."
-$DOCKER compose run --rm zallet --datadir /var/lib/zallet generate-mnemonic
+    echo "==> Running generate-mnemonic..."
+    $DOCKER compose run --rm zallet --datadir /var/lib/zallet generate-mnemonic
+fi
 
 echo "==> Stopping Zebra (will be restarted by docker compose up -d)..."
 $DOCKER compose down

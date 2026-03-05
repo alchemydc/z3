@@ -5,7 +5,7 @@
 //! to determine which methods belong to which service.
 use std::{env, net::SocketAddr, sync::Arc};
 
-const PLAYGROUND_URL: &str = "https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=https://raw.githubusercontent.com/oxarbitrage/z3/refs/heads/openrpc-router/rpc-router/z3_merged.json&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false";
+const PLAYGROUND_URL: &str = "https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=http://127.0.0.1:8181&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false";
 
 use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
@@ -351,10 +351,6 @@ async fn main() -> Result<()> {
             .clone();
 
     let z3 = merge_openrpc_schemas(zebra_schema, zallet_schema)?;
-
-    let file_path = "z3_merged.json";
-    tokio::fs::write(file_path, serde_json::to_string_pretty(&z3.merged)?).await?;
-    info!("Saved merged schema to {}", file_path);
 
     let listener = TcpListener::bind(addr).await?;
     info!("RPC Router listening on {}", addr);

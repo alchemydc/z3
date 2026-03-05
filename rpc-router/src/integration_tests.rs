@@ -108,6 +108,7 @@ async fn start_router(zebra_url: &str, zallet_url: &str, zaino_url: &str) -> Rou
         zebra_url: zebra_url.to_string(),
         zallet_url: zallet_url.to_string(),
         zaino_url: zaino_url.to_string(),
+        listen_port: 0,
         rpc_user: "zebra".to_string(),
         rpc_password: "zebra".to_string(),
         cors_origin: "*".to_string(),
