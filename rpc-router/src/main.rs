@@ -175,17 +175,17 @@ async fn handler(
             ));
         }
 
-        if let Some(_method) = z3
+        if z3
             .zebra_methods
             .iter()
-            .find(|m| m["name"] == rpc_req.method)
+            .any(|m| m["name"] == rpc_req.method)
         {
             info!("Routing {} to Zebra", rpc_req.method);
             &config.zebra_url
-        } else if let Some(_method) = z3
+        } else if z3
             .zallet_methods
             .iter()
-            .find(|m| m["name"] == rpc_req.method)
+            .any(|m| m["name"] == rpc_req.method)
         {
             info!("Routing {} to Zallet", rpc_req.method);
             &config.zallet_url
@@ -305,12 +305,7 @@ fn merge_openrpc_schemas(zebra: Value, zallet: Value) -> Result<Z3Schema> {
     let z3 = Z3Schema {
         zebra_methods,
         zallet_methods,
-        merged: Value::Object(
-            merged
-                .as_object()
-                .expect("merged object should be valid")
-                .clone(),
-        ),
+        merged,
     };
 
     Ok(z3)
