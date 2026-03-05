@@ -39,6 +39,7 @@ struct Config {
     zaino_url: String,
     rpc_user: String,
     rpc_password: String,
+    cors_origin: String,
 }
 
 impl Config {
@@ -51,6 +52,8 @@ impl Config {
             zaino_url: env::var("ZAINO_URL").unwrap_or_else(|_| "http://zaino:8237".to_string()),
             rpc_user: env::var("RPC_USER").unwrap_or_else(|_| "zebra".to_string()),
             rpc_password: env::var("RPC_PASSWORD").unwrap_or_else(|_| "zebra".to_string()),
+            cors_origin: env::var("CORS_ORIGIN")
+                .unwrap_or_else(|_| "https://playground.open-rpc.org".to_string()),
         }
     }
 }
@@ -113,13 +116,13 @@ async fn forward_request(
 }
 
 /// Adds CORS headers to the response.
-fn add_cors_headers(mut resp: Response<Full<Bytes>>) -> Response<Full<Bytes>> {
+fn add_cors_headers(mut resp: Response<Full<Bytes>>, cors_origin: &str) -> Response<Full<Bytes>> {
     let headers = resp.headers_mut();
+    headers.insert(
+        HeaderName::from_static("access-control-allow-origin"),
+        HeaderValue::from_str(cors_origin).unwrap_or(HeaderValue::from_static("*")),
+    );
     for &(name, value) in &[
-        (
-            "access-control-allow-origin",
-            "https://playground.open-rpc.org",
-        ),
         ("access-control-allow-methods", "POST, OPTIONS"),
         ("access-control-allow-headers", "Content-Type"),
         ("access-control-max-age", "86400"),
@@ -151,6 +154,7 @@ async fn handler(
                 .status(StatusCode::NO_CONTENT)
                 .body(Full::new(Bytes::new()))
                 .unwrap(),
+            &config.cors_origin,
         );
         return Ok(resp);
     }
@@ -178,6 +182,7 @@ async fn handler(
                     .header(hyper::header::CONTENT_TYPE, "application/json")
                     .body(Full::new(Bytes::from(serde_json::to_string(&z3.merged)?)))
                     .expect("z3 merged schema response should be valid"),
+                &config.cors_origin,
             ));
         }
 
@@ -208,7 +213,7 @@ async fn handler(
     let new_req = Request::from_parts(parts, Full::new(body_bytes));
 
     match forward_request(new_req, target_url, &config.rpc_user, &config.rpc_password).await {
-        Ok(res) => Ok(add_cors_headers(res)),
+        Ok(res) => Ok(add_cors_headers(res, &config.cors_origin)),
         Err(e) => {
             error!("Forwarding error: {}", e);
 

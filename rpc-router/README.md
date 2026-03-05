@@ -109,3 +109,11 @@ http://localhost:8080/
 ```
 
 The RPC router automatically sets the required CORS headers, allowing the playground (or other browser-based tools) to call the local endpoint directly.
+
+By default the `Access-Control-Allow-Origin` header is set to `https://playground.open-rpc.org`. To allow a different origin (e.g. a dApp frontend or any browser client), set the `CORS_ORIGIN` environment variable:
+
+```bash
+CORS_ORIGIN=https://myapp.example.com cargo run
+```
+
+For local development you can use `CORS_ORIGIN=*` to allow all origins. Avoid using `*` in production as it allows any website to call your local node.
