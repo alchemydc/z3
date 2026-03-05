@@ -1,4 +1,5 @@
 use super::*;
+use serial_test::serial;
 
 fn zebra_schema() -> Value {
     json!({
@@ -137,6 +138,7 @@ fn test_merge_openrpc_schemas_info_fields_present() {
 // --- Config::from_env ---
 
 #[test]
+#[serial]
 fn test_config_from_env_uses_defaults() {
     env::remove_var("RPC_USER");
     env::remove_var("RPC_PASSWORD");
@@ -146,6 +148,7 @@ fn test_config_from_env_uses_defaults() {
 }
 
 #[test]
+#[serial]
 fn test_config_from_env_reads_rpc_credentials() {
     env::set_var("RPC_USER", "alice");
     env::set_var("RPC_PASSWORD", "s3cr3t");
