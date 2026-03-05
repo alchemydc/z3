@@ -374,7 +374,7 @@ async fn run(config: Arc<Config>, listener: TcpListener, z3: Z3Schema) -> Result
 }
 
 #[cfg(test)]
-mod tests;
+mod unit_tests;
 
 #[cfg(test)]
 mod integration_tests;
