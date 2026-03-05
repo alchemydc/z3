@@ -18,7 +18,7 @@ In addition to request routing, the router also:
 
 ## Developer Usage
 
-To run the router, Zebra and Zallet must already be running and listening on known ports.
+To run the router, Zebra and Zallet must already be running, fully synced, and responsive on known ports **before** starting the router. At startup the router calls `rpc.discover` on both backends to build the merged schema — if either is unreachable the router exits immediately with an error.
 
 The router accepts this configuration via environment variables, or alternatively you can modify the values directly in main.rs.
 
