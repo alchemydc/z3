@@ -357,3 +357,6 @@ async fn main() -> Result<()> {
         });
     }
 }
+
+#[cfg(test)]
+mod tests;
