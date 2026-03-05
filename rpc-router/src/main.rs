@@ -188,11 +188,7 @@ async fn handler(
             ));
         }
 
-        if z3
-            .zebra_methods
-            .iter()
-            .any(|m| m["name"] == rpc_req.method)
-        {
+        if z3.zebra_methods.iter().any(|m| m["name"] == rpc_req.method) {
             info!("Routing {} to Zebra", rpc_req.method);
             &config.zebra_url
         } else if z3
@@ -231,7 +227,11 @@ async fn handler(
 }
 
 /// Calls rpc.discover on the given URL and returns the parsed JSON response.
-async fn call_rpc_discover(url: &str, rpc_user: &str, rpc_password: &str) -> Result<serde_json::Value> {
+async fn call_rpc_discover(
+    url: &str,
+    rpc_user: &str,
+    rpc_password: &str,
+) -> Result<serde_json::Value> {
     let client = ReqwestClient::new();
 
     let body = json!({
@@ -268,7 +268,10 @@ fn annotate_methods_with_server(methods: &mut Vec<Value>, server_name: &str) {
         if let Some(obj) = m.as_object_mut() {
             obj.insert("x-server".to_string(), json!(server_name));
         } else {
-            warn!("Skipping non-object method entry while annotating for {}", server_name);
+            warn!(
+                "Skipping non-object method entry while annotating for {}",
+                server_name
+            );
         }
     }
 }
@@ -334,8 +337,13 @@ async fn main() -> Result<()> {
     let config = Arc::new(Config::from_env());
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
 
-    let zebra_schema = call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password).await?["result"].clone();
-    let zallet_schema = call_rpc_discover(&config.zallet_url, &config.rpc_user, &config.rpc_password).await?["result"].clone();
+    let zebra_schema = call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password)
+        .await?["result"]
+        .clone();
+    let zallet_schema =
+        call_rpc_discover(&config.zallet_url, &config.rpc_user, &config.rpc_password).await?
+            ["result"]
+            .clone();
 
     let z3 = merge_openrpc_schemas(zebra_schema, zallet_schema)?;
 

@@ -113,11 +113,10 @@ async fn start_router(zebra_url: &str, zallet_url: &str, zaino_url: &str) -> Rou
         cors_origin: "*".to_string(),
     });
 
-    let zebra_schema =
-        call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password)
-            .await
-            .unwrap()["result"]
-            .clone();
+    let zebra_schema = call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password)
+        .await
+        .unwrap()["result"]
+        .clone();
     let zallet_schema =
         call_rpc_discover(&config.zallet_url, &config.rpc_user, &config.rpc_password)
             .await
@@ -272,7 +271,9 @@ async fn test_unknown_method_falls_back_to_zaino() {
 
     let resp = Client::new()
         .post(format!("http://127.0.0.1:{}/", router.port))
-        .json(&json!({ "jsonrpc": "2.0", "id": 1, "method": "z_getaddressforaccount", "params": [] }))
+        .json(
+            &json!({ "jsonrpc": "2.0", "id": 1, "method": "z_getaddressforaccount", "params": [] }),
+        )
         .send()
         .await
         .unwrap();
