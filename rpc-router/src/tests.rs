@@ -133,3 +133,25 @@ fn test_merge_openrpc_schemas_info_fields_present() {
     assert!(z3.merged["info"]["title"].is_string());
     assert!(z3.merged["info"]["version"].is_string());
 }
+
+// --- Config::from_env ---
+
+#[test]
+fn test_config_from_env_uses_defaults() {
+    env::remove_var("RPC_USER");
+    env::remove_var("RPC_PASSWORD");
+    let config = Config::from_env();
+    assert_eq!(config.rpc_user, "zebra");
+    assert_eq!(config.rpc_password, "zebra");
+}
+
+#[test]
+fn test_config_from_env_reads_rpc_credentials() {
+    env::set_var("RPC_USER", "alice");
+    env::set_var("RPC_PASSWORD", "s3cr3t");
+    let config = Config::from_env();
+    assert_eq!(config.rpc_user, "alice");
+    assert_eq!(config.rpc_password, "s3cr3t");
+    env::remove_var("RPC_USER");
+    env::remove_var("RPC_PASSWORD");
+}

@@ -37,6 +37,8 @@ struct Config {
     zebra_url: String,
     zallet_url: String,
     zaino_url: String,
+    rpc_user: String,
+    rpc_password: String,
 }
 
 impl Config {
@@ -47,6 +49,8 @@ impl Config {
             zallet_url: env::var("ZALLET_URL")
                 .unwrap_or_else(|_| "http://127.0.0.1:25251".to_string()),
             zaino_url: env::var("ZAINO_URL").unwrap_or_else(|_| "http://zaino:8237".to_string()),
+            rpc_user: env::var("RPC_USER").unwrap_or_else(|_| "zebra".to_string()),
+            rpc_password: env::var("RPC_PASSWORD").unwrap_or_else(|_| "zebra".to_string()),
         }
     }
 }
@@ -63,6 +67,8 @@ struct Z3Schema {
 async fn forward_request(
     req: Request<Full<Bytes>>,
     target_url: &str,
+    rpc_user: &str,
+    rpc_password: &str,
 ) -> Result<Response<Full<Bytes>>> {
     let client = HyperClient::builder(TokioExecutor::new()).build_http();
 
@@ -83,7 +89,7 @@ async fn forward_request(
         .version(parts.version);
 
     // Inject auth header
-    let auth = general_purpose::STANDARD.encode("zebra:zebra");
+    let auth = general_purpose::STANDARD.encode(format!("{}:{}", rpc_user, rpc_password));
     new_req = new_req.header(
         hyper::header::AUTHORIZATION,
         hyper::header::HeaderValue::from_str(&format!("Basic {}", auth))?,
@@ -201,7 +207,7 @@ async fn handler(
     // Reconstruct request with buffered body
     let new_req = Request::from_parts(parts, Full::new(body_bytes));
 
-    match forward_request(new_req, target_url).await {
+    match forward_request(new_req, target_url, &config.rpc_user, &config.rpc_password).await {
         Ok(res) => Ok(add_cors_headers(res)),
         Err(e) => {
             error!("Forwarding error: {}", e);
@@ -215,7 +221,7 @@ async fn handler(
 }
 
 /// Calls rpc.discover on the given URL and returns the parsed JSON response.
-async fn call_rpc_discover(url: &str) -> Result<serde_json::Value> {
+async fn call_rpc_discover(url: &str, rpc_user: &str, rpc_password: &str) -> Result<serde_json::Value> {
     let client = ReqwestClient::new();
 
     let body = json!({
@@ -227,7 +233,7 @@ async fn call_rpc_discover(url: &str) -> Result<serde_json::Value> {
 
     let text = client
         .post(url)
-        .basic_auth("zebra", Some("zebra"))
+        .basic_auth(rpc_user, Some(rpc_password))
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .body(body.to_string())
         .send()
@@ -318,8 +324,8 @@ async fn main() -> Result<()> {
     let config = Arc::new(Config::from_env());
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
 
-    let zebra_schema = call_rpc_discover(&config.zebra_url).await?["result"].clone();
-    let zallet_schema = call_rpc_discover(&config.zallet_url).await?["result"].clone();
+    let zebra_schema = call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password).await?["result"].clone();
+    let zallet_schema = call_rpc_discover(&config.zallet_url, &config.rpc_user, &config.rpc_password).await?["result"].clone();
 
     let z3 = merge_openrpc_schemas(zebra_schema, zallet_schema)?;
 
