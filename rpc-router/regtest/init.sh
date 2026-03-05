@@ -48,7 +48,10 @@ $DOCKER compose run --rm zallet --datadir /var/lib/zallet init-wallet-encryption
 echo "==> Running generate-mnemonic..."
 $DOCKER compose run --rm zallet --datadir /var/lib/zallet generate-mnemonic
 
+echo "==> Stopping Zebra (will be restarted by docker compose up -d)..."
+$DOCKER compose down
+
 echo ""
 echo "✅ Wallet initialized. Now run:"
 echo "   sudo -E docker compose up -d"
-echo "   # Router will be available at http://localhost:8181"
+echo "   # Router will be available at http://127.0.0.1:8181"

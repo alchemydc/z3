@@ -54,7 +54,11 @@ curl -s -X POST -H "Content-Type: application/json" \
 ## Stop and clean up
 
 ```bash
-sudo -E docker compose down -v   # -v removes the regtest volumes
+# Stop all containers (keeps volumes/wallet data)
+sudo -E docker compose down
+
+# Stop and delete all volumes (full reset — re-run init.sh afterwards)
+sudo -E docker compose down -v
 ```
 
 ## Notes
