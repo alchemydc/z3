@@ -249,9 +249,11 @@ fn extract_methods_array(schema: &Value) -> Vec<Value> {
 /// Annotates each method with its origin server.
 fn annotate_methods_with_server(methods: &mut Vec<Value>, server_name: &str) {
     for m in methods {
-        m.as_object_mut()
-            .unwrap()
-            .insert("x-server".to_string(), json!(server_name));
+        if let Some(obj) = m.as_object_mut() {
+            obj.insert("x-server".to_string(), json!(server_name));
+        } else {
+            warn!("Skipping non-object method entry while annotating for {}", server_name);
+        }
     }
 }
 
