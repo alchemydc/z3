@@ -16,6 +16,8 @@ In addition to request routing, the router also:
 - Exposes the merged schema via its own `rpc.discover` method
 - Saves the merged schema to a local `z3_merged.json` file on startup
 
+> **Note:** `z3_merged.json` is regenerated every time the router starts and the committed copy is used only to back the playground link in this README. It will go stale if Zebra or Zallet change their schemas — regenerate it by running the router against up-to-date backends and committing the new file.
+
 ## Developer Usage
 
 To run the router, Zebra and Zallet must already be running, fully synced, and responsive on known ports **before** starting the router. At startup the router calls `rpc.discover` on both backends to build the merged schema — if either is unreachable the router exits immediately with an error.
