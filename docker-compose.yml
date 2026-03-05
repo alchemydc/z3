@@ -53,6 +53,7 @@ services:
       - ZEBRA_RPC__ENABLE_COOKIE_AUTH=${ENABLE_COOKIE_AUTH}
       - ZEBRA_RPC__COOKIE_DIR=${COOKIE_AUTH_FILE_DIR}
       - ZEBRA_METRICS__ENDPOINT_ADDR=${ZEBRA_METRICS__ENDPOINT_ADDR}
+      - ZEBRA_MINING__MINER_ADDRESS=${ZEBRA_MINING__MINER_ADDRESS}
     volumes:
       # Blockchain state (defaults to named volume 'zebra_data')
       - ${Z3_ZEBRA_DATA_PATH}:/home/zebra/.cache/zebra

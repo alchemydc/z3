@@ -42,6 +42,7 @@ struct Config {
     rpc_user: String,
     rpc_password: String,
     cors_origin: String,
+    listen_port: u16,
 }
 
 impl Config {
@@ -56,6 +57,10 @@ impl Config {
             rpc_password: env::var("RPC_PASSWORD").unwrap_or_else(|_| "zebra".to_string()),
             cors_origin: env::var("CORS_ORIGIN")
                 .unwrap_or_else(|_| "https://playground.open-rpc.org".to_string()),
+            listen_port: env::var("LISTEN_PORT")
+                .ok()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(8080),
         }
     }
 }
@@ -200,10 +205,10 @@ async fn handler(
             &config.zallet_url
         } else {
             warn!(
-                "Method '{}' not found in Zebra or Zallet schema, falling back to Zaino",
+                "Method '{}' not found in Zebra or Zallet schema, falling back to Zebra",
                 rpc_req.method
             );
-            &config.zaino_url
+            &config.zebra_url
         }
     } else {
         warn!("Failed to parse JSON-RPC body, defaulting to Zebra");
@@ -335,7 +340,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
     let config = Arc::new(Config::from_env());
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.listen_port));
 
     let zebra_schema = call_rpc_discover(&config.zebra_url, &config.rpc_user, &config.rpc_password)
         .await?["result"]
