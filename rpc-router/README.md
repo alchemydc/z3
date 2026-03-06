@@ -33,6 +33,8 @@ Wait until both services are healthy, then note the RPC ports from your `.env` f
 
 > **Note:** A `openrpc.py` QA helper that spawned Zebra and Zallet in regtest mode previously existed in the Zebra repository but was removed. It has not been ported to the [zcash/integration-tests](https://github.com/zcash/integration-tests) repository.
 
+> **Note:** For experimental Z3 regtest mode of the router see [Regtest Environment](regtest/README.md).
+
 ### Running the RPC Router
 
 ```bash
@@ -90,7 +92,7 @@ INFO rpc_router: Routing getwalletinfo to Zallet
 
 You can interact with the merged OpenRPC schema using the OpenRPC Playground, pointed at your running router:
 
-[Playground](https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=http://127.0.0.1:8181&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false)
+[Playground](https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=http://127.0.0.1:8080&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false)
 
 When using the inspector, make sure the target server URL is set to:
 

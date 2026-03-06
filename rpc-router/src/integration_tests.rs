@@ -107,7 +107,7 @@ async fn start_router(zebra_url: &str, zallet_url: &str, zaino_url: &str) -> Rou
     let config = Arc::new(Config {
         zebra_url: zebra_url.to_string(),
         zallet_url: zallet_url.to_string(),
-        zaino_url: zaino_url.to_string(),
+        _zaino_url: zaino_url.to_string(),
         listen_port: 0,
         rpc_user: "zebra".to_string(),
         rpc_password: "zebra".to_string(),
@@ -264,7 +264,7 @@ async fn test_zallet_method_routing() {
 }
 
 #[tokio::test]
-async fn test_unknown_method_falls_back_to_zaino() {
+async fn test_unknown_method_falls_back_to_zebra() {
     let zebra = start_zebra_mock().await;
     let zallet = start_zallet_mock().await;
     let zaino = start_zaino_mock().await;
@@ -281,5 +281,5 @@ async fn test_unknown_method_falls_back_to_zaino() {
 
     assert_eq!(resp.status(), 200);
     let body: Value = resp.json().await.unwrap();
-    assert_eq!(body["result"], "zaino-response");
+    assert_eq!(body["result"], "zebra-response");
 }

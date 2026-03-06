@@ -5,7 +5,6 @@
 //! to determine which methods belong to which service.
 use std::{env, net::SocketAddr, sync::Arc};
 
-const PLAYGROUND_URL: &str = "https://playground.open-rpc.org/?uiSchema[appBar][ui:title]=Zcash&uiSchema[appBar][ui:logoUrl]=https://z.cash/wp-content/uploads/2023/03/zcash-logo.gif&schemaUrl=http://127.0.0.1:8181&uiSchema[appBar][ui:splitView]=false&uiSchema[appBar][ui:edit]=false&uiSchema[appBar][ui:input]=false&uiSchema[appBar][ui:examplesDropdown]=false&uiSchema[appBar][ui:transports]=false";
 
 use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
@@ -27,6 +26,14 @@ use serde_json::{json, Value};
 use tokio::net::TcpListener;
 use tracing::{error, info, warn};
 
+mod defaults;
+
+#[cfg(test)]
+mod unit_tests;
+
+#[cfg(test)]
+mod integration_tests;
+
 /// Structure to parse incoming JSON-RPC requests.
 #[derive(Deserialize, Debug)]
 struct RpcRequest {
@@ -38,7 +45,7 @@ struct RpcRequest {
 struct Config {
     zebra_url: String,
     zallet_url: String,
-    zaino_url: String,
+    _zaino_url: String,
     rpc_user: String,
     rpc_password: String,
     cors_origin: String,
@@ -49,18 +56,18 @@ impl Config {
     fn from_env() -> Self {
         Self {
             zebra_url: env::var("ZEBRA_URL")
-                .unwrap_or_else(|_| "http://127.0.0.1:20251".to_string()),
+                .unwrap_or_else(|_| defaults::ZEBRA_URL.to_string()),
             zallet_url: env::var("ZALLET_URL")
-                .unwrap_or_else(|_| "http://127.0.0.1:25251".to_string()),
-            zaino_url: env::var("ZAINO_URL").unwrap_or_else(|_| "http://zaino:8237".to_string()),
-            rpc_user: env::var("RPC_USER").unwrap_or_else(|_| "zebra".to_string()),
-            rpc_password: env::var("RPC_PASSWORD").unwrap_or_else(|_| "zebra".to_string()),
+                .unwrap_or_else(|_| defaults::ZALLET_URL.to_string()),
+            _zaino_url: env::var("ZAINO_URL").unwrap_or_else(|_| defaults::ZAINO_URL.to_string()),
+            rpc_user: env::var("RPC_USER").unwrap_or_else(|_| defaults::RPC_USER.to_string()),
+            rpc_password: env::var("RPC_PASSWORD").unwrap_or_else(|_| defaults::RPC_PASSWORD.to_string()),
             cors_origin: env::var("CORS_ORIGIN")
-                .unwrap_or_else(|_| "https://playground.open-rpc.org".to_string()),
+                .unwrap_or_else(|_| defaults::CORS_ORIGIN.to_string()),
             listen_port: env::var("LISTEN_PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
-                .unwrap_or(8080),
+                .unwrap_or(defaults::LISTEN_PORT),
         }
     }
 }
@@ -355,7 +362,7 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(addr).await?;
     info!("RPC Router listening on {}", addr);
     info!("You can use the following playground URL:");
-    info!("{}", PLAYGROUND_URL);
+    info!("{}", defaults::playground_url(addr));
 
     run(config, listener, z3).await
 }
@@ -381,9 +388,3 @@ async fn run(config: Arc<Config>, listener: TcpListener, z3: Z3Schema) -> Result
         });
     }
 }
-
-#[cfg(test)]
-mod unit_tests;
-
-#[cfg(test)]
-mod integration_tests;
