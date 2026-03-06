@@ -4,50 +4,41 @@
 # It does NOT connect to the standalone Zaino service (which is for gRPC clients).
 # For full configuration options, run: zallet example-config
 
-[builder]
-# Transaction builder settings - using defaults
-
 [builder.limits]
-# Transaction limits - using defaults
+orchard_actions = 250
 
 [consensus]
 # Network must match NETWORK_NAME in .env (Mainnet/Testnet)
 network = "main"
 
 [database]
-# Wallet database - using defaults (wallet.db in datadir)
 
 [external]
-# External settings - using defaults
 
 [features]
-as_of_version = "0.1.0-alpha.1"
+as_of_version = "0.0.0"
 
 [features.deprecated]
-# No deprecated features enabled
 
 [features.experimental]
-# No experimental features enabled
 
 [indexer]
 # Zallet's embedded Zaino indexer libraries connect to Zebra's JSON-RPC endpoint
 # to fetch blockchain data. The validator_address MUST point to Zebra (not the
 # standalone Zaino service). Service name 'zebra' and port from Z3_ZEBRA_RPC_PORT in .env
 validator_address = "zebra:18232"
-
-# Cookie authentication (matches Zebra's ENABLE_COOKIE_AUTH=true)
-validator_cookie_auth = true
-validator_cookie_path = "/var/run/auth/.cookie"
+validator_user = "zebra"
+validator_password = "zebra"
 
 [keystore]
-# Age encryption identity file (mounted from ./config/zallet_identity.txt)
 encryption_identity = "identity.txt"
 
 [note_management]
-# Note management - using defaults
 
 [rpc]
-# RPC server configuration
-# Bind address is set via ZALLET_RPC_BIND environment variable in docker-compose
 bind = ["0.0.0.0:28232"]
 timeout = 30
+
+[[rpc.auth]]
+user = "zebra"
+pwhash = "eaa27c81df81f655e69bbe84026e733a$bb9f70d53decfeca863cb114f7b0fd5ae050c7ef885c3d5fa73d5bace6c14fea"
