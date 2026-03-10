@@ -14,7 +14,7 @@
 
 services:
   zebra:
-    image: zfnd/zebra:3.1.0
+    image: zfnd/zebra:4.1.0
     container_name: z3_regtest_zebra
     restart: unless-stopped
     environment:
@@ -41,8 +41,9 @@ services:
       start_period: 30s
 
   zallet:
-    image: z3-zallet:local
+    image: z3_zallet:local
     container_name: z3_regtest_zallet
+    # zallet image is distroless (no /bin/sh), so CMD-SHELL healthchecks fail.
     restart: unless-stopped
     command: ["--datadir", "/var/lib/zallet", "start"]
     depends_on:
@@ -65,9 +66,12 @@ services:
       dockerfile: Dockerfile
     container_name: z3_regtest_router
     restart: unless-stopped
+    # In Compose networks, service keys are DNS hostnames.
+    # So `zebra` and `zallet` here resolve to those services on regtest_net,
+    # regardless of the explicit container_name values above.
     environment:
-      - ZEBRA_URL=http://z3_regtest_zebra:18232
-      - ZALLET_URL=http://z3_regtest_zallet:28232
+      - ZEBRA_URL=http://zebra:18232
+      - ZALLET_URL=http://zallet:28232
       - RPC_USER=zebra
       - RPC_PASSWORD=zebra
       - LISTEN_PORT=8181
@@ -76,6 +80,8 @@ services:
     depends_on:
       zebra:
         condition: service_healthy
+      zallet:
+        condition: service_started
     networks:
       - regtest_net
 

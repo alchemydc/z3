@@ -22,7 +22,16 @@ cd rpc-router/regtest
 This will:
 1. Start Zebra in regtest mode
 2. Mine 1 block (activates Orchard at height 1)
-3. Initialize the Zallet wallet (`init-wallet-encryption` + `generate-mnemonic`)
+3. Generate and inject the Zallet `rpc.auth.pwhash` in `config/zallet.toml`
+4. Initialize the Zallet wallet (`init-wallet-encryption` + `generate-mnemonic`)
+
+Optional: override the RPC password used for the hash generation:
+
+This (default) password which is included in zcash/integration-tests is not checked into the repo to avoid offending the kingphisher and other code scanning gods.
+
+```bash
+RPC_PASSWORD='your-password' ./init.sh
+```
 
 ## Start the stack
 
@@ -79,11 +88,11 @@ sudo -E docker compose down -v
 
 Successfully tested on:
 
-- **OS**: Linux Mint 21.2 (kernel 5.15.0-171-generic)
-- **Rust**: 1.90.0 (rpc-router built locally; Docker image uses `rust-1.85`)
+- **OS**: Linux Mint 21.2 (kernel 5.15.0-171-generic).  also Debian GNU/Linux 13 (trixie) (kernel 6.12.69+deb13-cloud-amd64)
+- **Rust**: 1.90.0 (rpc-router built locally; Docker image uses `rust-1.85`), also 1.94.0
 - **Docker Compose**: v5.1.0 (plugin, not standalone `docker-compose`)
-- **Zallet image**: `z3-zallet:local` built from submodule at `ae762c05` (Feb 2026)
-- **Zebra image**: `zfnd/zebra:3.1.0`
+- **Zallet image**: `z3-zallet:local` built from submodule at `ae762c05` (Feb 2026), also built from submodule at `757876b` (March 2026)
+- **Zebra image**: `zfnd/zebra:3.1.0` and `zfnd/zebra:4.1.0`
 
 Expected output for the test commands above:
 
