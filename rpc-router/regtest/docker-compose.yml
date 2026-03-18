@@ -14,7 +14,7 @@
 
 services:
   zebra:
-    image: zfnd/zebra:4.1.0
+    image: zfnd/zebra:4.2.0
     container_name: z3_regtest_zebra
     restart: unless-stopped
     environment:
