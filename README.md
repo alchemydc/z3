@@ -7,7 +7,8 @@ Three services replacing the legacy `zcashd`: **Zebra** (full node), **Zaino** (
 ```bash
 git clone https://github.com/ZcashFoundation/z3 && cd z3
 
-# Generate required credentials
+# Seed config files and generate required credentials
+cp -n config/zallet.toml.default config/zallet.toml
 openssl req -x509 -newkey rsa:4096 -keyout config/tls/zaino.key -out config/tls/zaino.crt \
   -sha256 -days 365 -nodes -subj "/CN=localhost" \
   -addext "subjectAltName=DNS:localhost,DNS:zaino,IP:127.0.0.1"
@@ -27,7 +28,7 @@ docker compose up -d
 Pre-built images for all 3 services are pulled automatically. No build step or submodule init needed.
 
 > [!WARNING]
-> The TLS certificate and identity file must exist before running any `docker compose` command. If `config/tls/zaino.crt` or `config/tls/zaino.key` are missing, Compose will fail with a file-not-found error.
+> The TLS certificate, identity file, and zallet config must exist before running any `docker compose` command. Run the setup steps above first — if any file is missing, Compose will fail.
 
 > [!IMPORTANT]
 > Zebra must sync the blockchain before Zaino and Zallet can start. Running `docker compose up -d` on a fresh install without syncing Zebra first will cause the other services to fail repeatedly. Start Zebra alone, wait for sync, then start the rest.

@@ -80,6 +80,15 @@ ensure_openssl() {
     exit 1
 }
 
+seed_configs() {
+    for name in config/zallet.toml config/regtest/zallet.toml; do
+        if [ ! -f "$REPO_ROOT/$name" ] && [ -f "$REPO_ROOT/$name.default" ]; then
+            cp "$REPO_ROOT/$name.default" "$REPO_ROOT/$name"
+            log "==> Seeded $name from $name.default"
+        fi
+    done
+}
+
 update_zallet_rpc_pwhash() {
     local config_path="$REPO_ROOT/config/regtest/zallet.toml"
     local rpc_password="${RPC_PASSWORD:-zebra}"
@@ -133,6 +142,7 @@ fi
 
 cd "$REPO_ROOT"
 
+seed_configs
 ensure_local_identity
 ensure_tls_certs
 update_zallet_rpc_pwhash
