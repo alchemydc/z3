@@ -140,7 +140,7 @@ All images can be overridden via environment variables (`ZEBRA_IMAGE`, `ZAINO_IM
 
 | Service | Default Image | Source |
 |---------|---------------|--------|
-| Zebra | `zfnd/zebra:4.3.0` | [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
+| Zebra | `zfnd/zebra:4.3.1` | [ZcashFoundation/zebra](https://github.com/ZcashFoundation/zebra) |
 | Zaino | `ghcr.io/zcashfoundation/zaino:sha-83e41d7` | [zingolabs/zaino](https://github.com/zingolabs/zaino) |
 | Zallet | `electriccoinco/zallet:v0.1.0-alpha.3` | [zcash/wallet](https://github.com/zcash/wallet) |
 | zcashd | `electriccoinco/zcashd:latest` | [zcash/zcash](https://github.com/zcash/zcash) |
