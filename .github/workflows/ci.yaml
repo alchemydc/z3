@@ -25,7 +25,9 @@ jobs:
 
       - name: Generate TLS certs and regtest configs
         run: |
-          mkdir -p config/tls config/regtest
+          cp -n config/zallet.toml.default config/zallet.toml
+          cp -n config/regtest/zallet.toml.default config/regtest/zallet.toml
+          mkdir -p config/tls
           openssl req -x509 -newkey rsa:2048 \
             -keyout config/tls/zaino.key -out config/tls/zaino.crt \
             -sha256 -days 1 -nodes -subj "/CN=localhost" \
