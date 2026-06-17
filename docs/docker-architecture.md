@@ -268,6 +268,12 @@ The base compose includes a small `cookie-permissions` sidecar (`alpine:3` with 
 
 Zaino and Zallet depend on the sidecar's healthcheck, so targeted starts such as `docker compose up -d zaino` also start the sidecar and wait until the cookie is readable. On mainnet and testnet the healthcheck waits for `/var/run/auth/.cookie`; on regtest it exits successfully because cookie auth is disabled and username/password auth is used instead.
 
+## Zallet config readability and operator uid
+
+Zallet uses a distroless image with no shell, entrypoint script, or Linux capabilities, so the base compose pins it with `user: "1000:1000"` and it runs as that uid from PID 1 — unlike Zebra (root entrypoint that drops to uid 10001) and Zaino (root entrypoint with `cap_add: [DAC_OVERRIDE, ...]`, which bypasses file-permission checks before dropping privileges). Zallet therefore can only read its two bind-mounted host config files — `config/<network>/zallet.toml` → `/etc/zallet/zallet.toml` and `config/<network>/zallet_identity.txt` → `/etc/zallet/identity.txt` — if they are readable by uid 1000.
+
+The same "no UID coordination required" property that the cookie sidecar provides applies here: the setup scripts make this config readable by uid 1000 regardless of the operator's host uid. `scripts/setup-network.sh` writes `zallet.toml` (and the other non-secret TOMLs) mode `0644`; `scripts/regtest-init.sh` restores `0644` after its `mktemp`+`mv` pwhash rewrite (which would otherwise leave the file `0600`). The age key `zallet_identity.txt` is a long-lived wallet secret, so instead of widening it to all local users it stays mode `0600` with a POSIX ACL granting read to uid 1000 only (`setfacl -m u:1000:r`). `setfacl` (the `acl` package on Linux, with an ACL-capable filesystem such as ext4/xfs) is a soft prerequisite; if it is unavailable the script warns and the operator can fall back to `chmod 644` on the identity file.
+
 ## Regtest overlay constraints
 
 ### Zaino authentication

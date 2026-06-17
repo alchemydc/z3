@@ -85,6 +85,12 @@ jobs:
           SALT=$(openssl rand -hex 16)
           HASH=$(printf 'zebra' | openssl dgst -sha256 -mac HMAC -macopt "key:$SALT" | awk '{print $NF}')
           sed -i "s|__GENERATED_BY_INIT_SH__|${SALT}\$${HASH}|" config/regtest/zallet.toml
+          # Mirror the permission end-state of setup-network.sh / regtest-init.sh
+          # so the readability assertion below exercises the real contract:
+          # non-secret TOMLs world-readable, the age key 0600 + ACL for uid 1000.
+          chmod 644 config/regtest/zallet.toml config/regtest/zaino.toml config/regtest/zebra.toml
+          chmod 600 config/regtest/zallet_identity.txt
+          setfacl -m u:1000:r config/regtest/zallet_identity.txt
 
       - name: Start Zebra (regtest)
         run: |
@@ -135,6 +141,15 @@ jobs:
 
       - name: Verify Zallet accepts compose command
         run: docker compose --env-file .env.regtest run --rm --no-deps zallet --help
+
+      - name: Assert Zallet config is readable by the container uid (1000)
+        # Zallet runs as uid 1000 (distroless image, no runtime chown). Guards
+        # the config-readability contract: zallet.toml is world-readable and the
+        # age key is reachable by uid 1000 via ACL. Catches a regression of the
+        # mktemp-0600 mode leaking back onto the rewritten config.
+        run: |
+          docker run --rm --user 1000:1000 -v "$PWD/config/regtest":/c:ro alpine \
+            sh -c 'cat /c/zallet.toml >/dev/null && cat /c/zallet_identity.txt >/dev/null && echo "uid 1000 read OK"'
 
       - name: Verify the cookie volume is attachable
         # Regtest disables cookie auth (ZEBRA_RPC__ENABLE_COOKIE_AUTH=false) so

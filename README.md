@@ -358,6 +358,8 @@ Fix permissions before starting:
 
 Zebra, Zaino, and Zallet each run as a specific non-root user. Directories must have correct ownership (set by the script) and `700` permissions. Never use `755` or `777`.
 
+Operators whose host uid is not `1000` do **not** need to coordinate uids for Zallet's bind-mounted config. Zallet runs as uid 1000 (distroless image), and `setup-network.sh` makes `zallet.toml` readable by that uid (`0644`) and grants the age key `zallet_identity.txt` read access for uid 1000 via a POSIX ACL (`setfacl -m u:1000:r`) while keeping it `0600` for everyone else. Install the `acl` package on Linux for this; if `setfacl` is unavailable the script warns and you can fall back to `chmod 644` on the identity file.
+
 </details>
 
 <details>

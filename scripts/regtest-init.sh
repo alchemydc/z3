@@ -107,6 +107,9 @@ update_zallet_rpc_pwhash() {
 
     sed -E "s|^pwhash = \".*\"$|pwhash = \"${pwhash}\"|" "$config_path" > "$tmp"
     mv "$tmp" "$config_path"
+    # mktemp creates the temp file mode 0600 and mv carries that mode onto the
+    # config; restore world-read so the zallet container (uid 1000) can read it.
+    chmod 644 "$config_path"
 
     log "==> Generated zallet RPC pwhash in ${CONFIG_DIR}/zallet.toml"
 }

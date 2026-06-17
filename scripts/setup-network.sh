@@ -48,6 +48,10 @@ copy_template() {
     fi
 
     cp "$example" "$active"
+    # Make the config world-readable so the pinned zallet container uid (1000)
+    # can read it regardless of the operator's host uid/umask. These TOMLs are
+    # not secret; the age key is handled separately in ensure_identity.
+    chmod 644 "$active"
     log "==> $NETWORK/$file: created from .example template."
 }
 
@@ -67,6 +71,15 @@ ensure_identity() {
 
     rage-keygen -o "$identity"
     chmod 600 "$identity"
+    # Zallet runs as uid 1000 (distroless image, no runtime chown). Grant that
+    # uid read access to the age key without widening it to other host users.
+    if command -v setfacl >/dev/null 2>&1; then
+        setfacl -m u:1000:r "$identity" \
+            || log "WARN: setfacl failed on $identity; zallet (uid 1000) may not be able to read it."
+    else
+        log "WARN: setfacl not found. Grant uid 1000 read on $identity before starting zallet"
+        log "      (install the 'acl' package, or 'chmod 644 $identity' to allow all local users)."
+    fi
     log "==> $NETWORK/zallet_identity.txt: generated."
 }
 
